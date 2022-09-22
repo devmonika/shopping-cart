@@ -42,7 +42,7 @@ const loadAllCat = async (category) => {
 // get all product
 
 const getShopApi = async () => {
-	const url =`https://fakestoreapi.com/products`;
+	const url = `https://fakestoreapi.com/products`;
 	const res = await fetch(url);
 	const data = await res.json();
 	showShopData(data);
@@ -52,73 +52,85 @@ const getShopApi = async () => {
 //global variable array
 let cart = JSON.parse(localStorage.getItem('cart'));
 
-const addItem = async(productID) =>{
-  const product = await productForCart(productID).then(data=> data);
+const addItem = async (productID) => {
+	const product = await productForCart(productID).then((data) => data);
+	product.quantity = 1;
+	updateQuantity(productID);
 	if (!cart.length) {
 		cart.push(product);
 	} else {
 		let data = cart.find((element) => element.id == productID);
-		if (data == undefined) {
+		if (data === undefined) {
 			cart.push(product);
+			showToast('Added New Product', 'success');
 		}
 	}
 	localStorage.setItem('cart', JSON.stringify(cart));
 	displayCartLength(cart);
-	showCartItems(product);
-}
+	showCartItems(cart);
+};
+const updateQuantity = (productID) => {
+	const product = cart.find(
+		(product) => product.id.toString() === productID.toString()
+	);
+	if (product) {
+		product.quantity += 1;
+		showToast(`Updated Quantity ${product.quantity}`, 'info');
+	}
+};
 
 const displayCartLength = (cart) => {
 	const display = document.getElementById('add-item');
 	display.innerText = cart.length;
 };
-// show cart items 
-const showCartItems = (product) =>{
+
+// show cart items
+const showCartItems = (cart) => {
 	const display = document.getElementById('show-cart');
-	const container = document.createElement('div');
-	container.innerHTML=`
-	<div class="p-2 flex bg-white hover:bg-gray-100 cursor-pointer border-b border-gray-100" style="">
-		<div class="p-2 w-12"><img src="${
-			product.image ? product.image : 'no img found'
-		}" alt="img product"></div>
-		<div class="flex-auto text-sm w-32">
-			<div class="font-bold">${
-				product.title ? product.title : 'no title found'
-			}</div>
-			<div class="truncate">${product.description.slice(0, 20)}</div>
-			<div class="text-gray-400">Qt: ${product.cart}</div>
-		</div>
-		<div class="flex flex-col w-18 font-medium items-end">
-			<div class="w-4 h-4 mb-6 hover:bg-red-200 rounded-full cursor-pointer text-red-700">
-				<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 ">
-					<polyline points="3 6 5 6 21 6"></polyline>
-					<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-					<line x1="10" y1="11" x2="10" y2="17"></line>
-					<line x1="14" y1="11" x2="14" y2="17"></line>
-				</svg>
-			</div>
-			$${product.price}</div>
+	display.innerHTML = '';
+
+	cart.length &&
+		cart.forEach((product) => {
+			const container = document.createElement('div');
+			container.innerHTML = `
+	<div class="p-2 w-12"><img src="${
+		product.image ? product.image : 'no img found'
+	}" alt="img product"></div>
+	<div class="flex-auto text-sm w-32">
+	<div class="font-bold">${product.title ? product.title : 'no title found'}</div>
+	<div class="truncate">${product.description.slice(0, 20)}</div>
+	<div class="text-gray-400">Qt: ${product.quantity}</div>
 	</div>
-    <div class="p-4 justify-around flex ">
-        <button class="text-base  undefined  hover:scale-110 focus:outline-none flex justify-center px-4 py-2 rounded font-bold cursor-pointer 
-      hover:bg-teal-700 hover:text-teal-100 
-      bg-teal-100 
-      text-teal-700 
-      border duration-200 ease-in-out 
-      border-teal-600 transition">Checkout</button>
-	  <button class="text-base  undefined  hover:scale-110 focus:outline-none flex justify-center px-4 py-2 rounded font-bold cursor-pointer 
-      hover:bg-teal-700 hover:text-teal-100 
-      bg-teal-100 
-      text-teal-700 
-      border duration-200 ease-in-out 
-      border-teal-600 transition">View Cart</button>
-    </div>
+	<div class="flex flex-col w-18 font-medium items-end">
+	<div class="w-4 h-4 mb-6 hover:bg-red-200 rounded-full cursor-pointer text-red-700" onclick="removeCart('${product.id}')">
+		<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" viewBox="0 0 24 24"
+		stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+		class="feather feather-trash-2 ">
+		<polyline points="3 6 5 6 21 6"></polyline>
+		<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+		<line x1="10" y1="11" x2="10" y2="17"></line>
+		<line x1="14" y1="11" x2="14" y2="17"></line>
+		</svg>
+	</div>
+	$${product.price}
+	</div>
 	`;
-	display.appendChild(container);
+			display.appendChild(container);
+		});
 	// console.log(product);
-}
-
+};
+displayCartLength(cart);
+showCartItems(cart);
 // show all product
-
+const removeCart = (productID) => {
+	const previousCart = JSON.parse(localStorage.getItem('cart'));
+	const newCart = previousCart.filter(product => product.id.toString() !== productID)
+	localStorage.setItem('cart', JSON.stringify(newCart));
+	cart = newCart;
+	showCartItems(newCart);
+	displayCartLength(newCart);
+	showToast('Removed From Cart', 'error');
+}
 const showShopData = (shopDatas) => {
 	const ShopItem = document.getElementById('show-item');
 	ShopItem.textContent = '';
@@ -194,8 +206,22 @@ const showProductDetails = (shopData) => {
 	showDetailsOfProduct.appendChild(modalBox);
 };
 
-
-
 getCatUrl();
 // productPOpUp();
 getShopApi();
+
+const showToast = (text,type) => {
+	const toastContainer = document.getElementById('toast-container');
+	toastContainer.innerHTML = '';
+	const div = document.createElement('div');
+	div.className = `alert alert-${type}`;
+	div.innerHTML = `
+    <div>
+      <span class="text-white">${text}</span>
+    </div>
+	`;
+	toastContainer.appendChild(div);
+	setTimeout(function () {
+		toastContainer.innerHTML = '';
+	},1000)
+};
